@@ -1,0 +1,154 @@
+--Delete borrow transactions with zero fine and already returned
+DELETE FROM BorrowTransactions
+WHERE Fine = 0
+  AND ReturnDate IS NOT NULL;
+
+--The librarian wants to increase the number of copies for a book.
+UPDATE books
+SET copiesavailable = copiesavailable + 3
+WHERE bookid = 12;
+
+--librarian wants to know which members currently have overdue books(Overdue books are books that a member borrowed but did NOT return by the due date.)
+
+SELECT m.FullName, b.Title, bt.DueDate
+FROM BorrowTransactions bt
+JOIN Members m ON bt.MemberID = m.MemberID
+JOIN Books b ON bt.BookID = b.BookID
+WHERE bt.ReturnDate IS NULL
+  AND bt.DueDate< CURRENT_DATE;
+
+--Show total fines collected by the library
+ SELECT SUM(fine) AS total_fines
+FROM BorrowTransactions;
+
+--Show members with the highest total fines
+SELECT m.fullname, SUM(bt.fine) AS total_fines
+FROM BorrowTransactions bt
+JOIN Members m ON bt.memberid = m.memberid
+GROUP BY m.fullname
+ORDER BY total_fines DESC;
+
+--count how many borrow transactions each staff handled
+
+SELECT s.fullname, COUNT(bt.transactionid) AS transactions_handled
+FROM Staff s
+LEFT JOIN BorrowTransactions bt ON s.staffid = bt.staffid
+GROUP BY s.fullname
+ORDER BY transactions_handled DESC;
+
+--List books currently borrowed 
+
+SELECT bt.transactionid, b.title, m.fullname, bt.borrowdate
+FROM BorrowTransactions bt
+JOIN Books b ON bt.bookid = b.bookid
+JOIN Members m ON bt.memberid = m.memberid
+WHERE bt.returndate IS NULL;  
+
+--  Display members whose total fine is greater than the average fine
+SELECT m.FullName, SUM(bt.Fine) AS total_fine
+FROM BorrowTransactions bt
+JOIN Members m ON bt.MemberID = m.MemberID
+GROUP BY m.FullName
+HAVING SUM(bt.Fine) > (SELECT AVG(Fine) FROM BorrowTransactions);
+
+
+--  Show the total number of reservations grouped by status
+SELECT Status,
+       COUNT(*) AS total_reservations
+FROM Reservations
+GROUP BY Status;
+
+-- Find the most recent borrow date for each member
+SELECT m.FullName,MAX(bt.BorrowDate) AS last_borrowed_date
+FROM BorrowTransactions bt
+JOIN Members m ON bt.MemberID = m.MemberID
+GROUP BY m.FullName;
+
+--Books that are reserved but not yet borrowed
+SELECT b.Title, m.FullName,r.ReservationDate
+FROM reservations r
+JOIN Members m ON r.MemberID = m.MemberID
+JOIN Books b ON r.BookID = b.BookID
+WHERE r.BookID NOT IN (
+SELECT BookID
+FROM BorrowTransactions
+WHERE ReturnDate IS NULL
+);
+
+
+--If phone is missing, show email. If both missing, show “No Contact”
+SELECT
+    FullName,
+    COALESCE(Phone, Email, 'No Contact') AS contact_method
+FROM Members;
+
+--Avoid division by zero when calculating average fine
+SELECT
+    SUM(Fine) / NULLIF(COUNT(TransactionID), 0) AS avg_fine
+FROM BorrowTransactions;
+
+--Categorize book availability
+SELECT Title,CopiesAvailable,
+    CASE
+        WHEN CopiesAvailable = 0 THEN 'Out of Stock'
+        WHEN CopiesAvailable <= 2 THEN 'Limited'
+        ELSE 'Available'
+    END AS availability
+FROM Books;
+
+--Show staff role even if missing
+SELECT
+    fullname,
+    COALESCE(Role, 'Not Assigned') AS staff_role
+FROM Staff;
+
+
+--Library wants a list of all active users (any interaction)
+SELECT m.MemberID, m.FullName
+FROM Members m
+JOIN BorrowTransactions bt ON m.MemberID = bt.MemberID
+UNION
+SELECT m.MemberID, m.FullName
+FROM Members m
+JOIN Reservations r ON m.MemberID = r.MemberID;
+
+
+--Members who both borrowed AND reserved
+SELECT m.MemberID, m.FullName
+FROM Members m
+JOIN Reservations r ON m.MemberID = r.MemberID
+INTERSECT
+SELECT m.MemberID, m.FullName
+FROM Members m
+JOIN BorrowTransactions bt ON m.MemberID = bt.MemberID
+order by memberid ;
+
+--Members – Months since joining the library
+SELECT 
+    FullName,
+    JoinDate,
+    ROUND(
+        (CURRENT_DATE - JoinDate) / 30.0,2) AS Months
+FROM Members;
+
+--Borrow transactions – Remainder of the fine
+SELECT 
+    TransactionID,
+    Fine,
+    MOD(Fine, 2) AS Fine_Remainder
+FROM BorrowTransactions
+WHERE Fine > 0;
+
+
+SELECT m.fullName,
+       b.title,
+       bt.duedate,
+       --DATEDIFF(CURRENT_DATE, bt.duedate) 
+       (CURRENT_DATE - bt.duedate)AS overdue_days ,
+      ((CURRENT_DATE - bt.duedate)/7) AS overdue_weeks,
+       ((CURRENT_DATE - bt.duedate)/30) AS overdue_months
+FROM borrowtransactions bt
+JOIN members m ON bt.memberid = m.memberid
+JOIN books b ON bt.bookid = b.bookid
+WHERE bt.returndate IS NULL
+AND bt.duedate < CURRENT_DATE;

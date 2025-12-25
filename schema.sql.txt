@@ -1,0 +1,322 @@
+
+
+-- Authors
+CREATE TABLE Authors (
+    AuthorID SERIAL PRIMARY KEY,
+    first_name VARCHAR(150) NOT NULL,
+    last_name VARCHAR(150) NOT NULL,
+    Country VARCHAR(100),
+    BirthDate DATE
+);
+
+-- Categories
+CREATE TABLE Categories (
+    CategoryID SERIAL PRIMARY KEY,
+    CategoryName VARCHAR(100) NOT NULL UNIQUE,
+    Description TEXT
+);
+
+-- Publishers
+CREATE TABLE Publishers (
+    PublisherID SERIAL PRIMARY KEY,
+    PublisherName VARCHAR(150) NOT NULL,
+    Address TEXT,
+    Email VARCHAR(100),
+    Phone VARCHAR(20)
+);
+
+-- Books
+CREATE TABLE Books (
+    BookID SERIAL PRIMARY KEY,
+    Title VARCHAR(200) NOT NULL,
+    ISBN VARCHAR(20) UNIQUE,
+    YearPublished INT,
+    CopiesAvailable INT DEFAULT 0
+);
+
+-- Members
+CREATE TABLE Members (
+    MemberID SERIAL PRIMARY KEY,
+    FullName VARCHAR(150) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    Phone VARCHAR(20),
+    Address TEXT,
+    JoinDate DATE DEFAULT CURRENT_DATE,
+    Status VARCHAR(50) DEFAULT 'Active'
+);
+
+-- Staff
+CREATE TABLE Staff (
+    StaffID SERIAL PRIMARY KEY,
+    FullName VARCHAR(150) NOT NULL,
+    Role VARCHAR(100),
+    Email VARCHAR(100) UNIQUE,
+    Phone VARCHAR(20)
+);
+
+CREATE TABLE BorrowTransactions (
+    TransactionID SERIAL PRIMARY KEY,
+    BookID INT NOT NULL,
+    MemberID INT NOT NULL,
+    StaffID INT NOT NULL,
+    BorrowDate DATE DEFAULT CURRENT_DATE,
+    DueDate DATE NOT NULL,
+    ReturnDate DATE,
+    Fine DECIMAL(10,2) DEFAULT 0
+);
+
+
+CREATE TABLE Reservations (
+    ReservationID SERIAL PRIMARY KEY,
+    BookID INT NOT NULL,
+    MemberID INT NOT NULL,
+    ReservationDate DATE DEFAULT CURRENT_DATE,
+    Status VARCHAR(50) DEFAULT 'Pending'
+);
+
+
+
+-- Relationship: Author WRITES Book (1-to-Many)
+CREATE TABLE Writes (
+    AuthorID INT NOT NULL,
+    BookID INT NOT NULL,
+    PRIMARY KEY (AuthorID, BookID),
+    FOREIGN KEY (AuthorID) REFERENCES Authors(AuthorID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Relationship: Publisher PUBLISHES Book (1-to-Many)
+CREATE TABLE Publishes (
+    PublisherID INT NOT NULL,
+    BookID INT NOT NULL,
+    PRIMARY KEY (PublisherID, BookID),
+    FOREIGN KEY (PublisherID) REFERENCES Publishers(PublisherID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Relationship: Book BELONGS TO Category (1-to-Many)
+CREATE TABLE BelongsTo (
+    CategoryID INT NOT NULL,
+    BookID INT NOT NULL,
+    PRIMARY KEY (CategoryID, BookID),
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Relationship: Member BORROWS Book (Borrow Transaction)
+CREATE TABLE Borrows (
+    TransactionID SERIAL PRIMARY KEY,
+    BookID INT NOT NULL,
+    MemberID INT NOT NULL,
+    StaffID INT NOT NULL,
+    BorrowDate DATE DEFAULT CURRENT_DATE,
+    DueDate DATE NOT NULL,
+    ReturnDate DATE,
+    Fine DECIMAL(10,2) DEFAULT 0,
+    FOREIGN KEY (BookID) REFERENCES Books(BookID),
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID),
+    FOREIGN KEY (StaffID) REFERENCES Staff(StaffID)
+);
+
+-- Relationship: Member RESERVES Book
+CREATE TABLE Reserves (
+    ReservationID SERIAL PRIMARY KEY,
+    BookID INT NOT NULL,
+    MemberID INT NOT NULL,
+    ReservationDate DATE DEFAULT CURRENT_DATE,
+    Status VARCHAR(50) DEFAULT 'Pending',
+    FOREIGN KEY (BookID) REFERENCES Books(BookID),
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
+);
+
+create table handles (
+    staffid INT NOT NULL,
+    transactionid INT NOT NULL,
+    PRIMARY KEY (staffid,transactionid ),
+    FOREIGN KEY (transactionid) REFERENCES borrowtransactions(transactionid),
+    FOREIGN KEY (staffid) REFERENCES staff(staffid)
+);
+
+
+--Insert the variables
+INSERT INTO Authors (first_name, last_name, Country, BirthDate) VALUES
+('J.K.', 'Rowling', 'UK', '1965-07-31'),
+('George', 'Orwell', 'UK', '1903-06-25'),
+('Jane', 'Austen', 'UK', '1775-12-16'),
+('Mark', 'Twain', 'USA', '1835-11-30'),
+('Leo', 'Tolstoy', 'Russia', '1828-09-09'),
+('Agatha', 'Christie', 'UK', '1890-09-15'),
+('Ernest', 'Hemingway', 'USA', '1899-07-21'),
+('F. Scott', 'Fitzgerald', 'USA', '1896-09-24'),
+('Charles', 'Dickens', 'UK', '1812-02-07'),
+('Haruki', 'Murakami', 'Japan', '1949-01-12'),
+('Gabriel', 'Garcia Marquez', 'Colombia', '1927-03-06'),
+('H.G.', 'Wells', 'UK', '1866-09-21'),
+('J.R.R.', 'Tolkien', 'UK', '1892-01-03'),
+('Virginia', 'Woolf', 'UK', '1882-01-25'),
+('Fyodor', 'Dostoevsky', 'Russia', '1821-11-11'),
+('Khaled', 'Hosseini', 'Afghanistan', '1965-03-04'),
+('Isabel', 'Allende', 'Chile', '1942-08-02'),
+('Dan', 'Brown', 'USA', '1964-06-22'),
+('Suzanne', 'Collins', 'USA', '1962-08-10'),
+('George R.R.', 'Martin', 'USA', '1948-09-20');
+
+
+INSERT INTO Categories (categoryname, description) VALUES
+('Fantasy', 'Books that contain magical or supernatural elements'),
+('Science Fiction', 'Futuristic, scientific, or technological themes'),
+('Mystery', 'Suspenseful stories with a crime or puzzle to solve'),
+('Romance', 'Love stories with emotional relationships'),
+('Historical', 'Books set in a past historical period'),
+('Horror', 'Books meant to scare or disturb readers'),
+('Thriller', 'Fast-paced suspenseful stories'),
+('Biography', 'Life stories of real people'),
+('Self-Help', 'Books that guide personal growth or improvement'),
+('Philosophy', 'Books exploring fundamental questions of existence'),
+('Adventure', 'Exciting journeys or expeditions'),
+('Poetry', 'Books consisting of poems'),
+('Classic', 'Books recognized as having lasting significance'),
+('Children', 'Books targeted for children and young readers'),
+('Young Adult', 'Books aimed at teenage readers'),
+('Science', 'Books about scientific topics or discoveries'),
+('Travel', 'Books describing journeys or places'),
+('Cooking', 'Books with recipes and culinary tips'),
+('Religion', 'Books about religious beliefs or practices'),
+('Art', 'Books about painting, sculpture, or visual arts');
+
+INSERT INTO Publishers (PublisherName, Address, Email, Phone) VALUES
+('Penguin Random House', '1745 Broadway, New York, NY, USA', 'contact@penguinrandomhouse.com', '+1-212-782-9000'),
+('HarperCollins', '195 Broadway, New York, NY, USA', 'info@harpercollins.com', '+1-212-207-7000'),
+('Simon & Schuster', '1230 Avenue of the Americas, New York, NY, USA', 'info@simonandschuster.com', '+1-212-698-7000'),
+('Macmillan Publishers', '120 Broadway, New York, NY, USA', 'info@macmillan.com', '+1-646-307-5151'),
+('Hachette Livre', '43 Quai de Grenelle, 75015 Paris, France', 'contact@hachette.com', '+33-1-45-63-16-00'),
+('Scholastic', '557 Broadway, New York, NY, USA', 'customerservice@scholastic.com', '+1-212-343-6100'),
+('Bloomsbury', '50 Bedford Square, London, UK', 'info@bloomsbury.com', '+44-20-7631-5600'),
+('Oxford University Press', 'Great Clarendon Street, Oxford, UK', 'contact@oup.com', '+44-1865-556767'),
+('Cambridge University Press', 'University Printing House, Cambridge, UK', 'info@cambridge.org', '+44-1223-312393'),
+('Pearson', '80 Strand, London, UK', 'info@pearson.com', '+44-20-7010-2000'),
+('Random House UK', '20 Vauxhall Bridge Rd, London, UK', 'contact@randomhouse.co.uk', '+44-20-7840-8400'),
+('Cengage', '200 Pier 4 Blvd, Boston, MA, USA', 'support@cengage.com', '+1-800-354-9706'),
+('Springer', 'Tiergartenstr. 17, 69121 Heidelberg, Germany', 'info@springer.com', '+49-6221-4870'),
+('Wiley', '111 River St, Hoboken, NJ, USA', 'support@wiley.com', '+1-201-748-6000'),
+('McGraw-Hill', '1221 Avenue of the Americas, New York, NY, USA', 'customerservice@mcgraw-hill.com', '+1-800-338-3987'),
+('Houghton Mifflin', '125 High Street, Boston, MA, USA', 'info@hmhco.com', '+1-617-351-5000'),
+('Harlequin', '225 Duncan Mill Rd, Toronto, Canada', 'info@harlequin.com', '+1-416-426-4210'),
+('DK Publishing', '80 Strand, London, UK', 'contact@dk.com', '+44-20-7891-4000'),
+('Barrons', '250 Wireless Blvd, Hauppauge, NY, USA', 'support@barrons.com', '+1-631-231-4000'),
+('Faber & Faber', 'Faber House, 24 Russell Square, London, UK', 'info@faber.co.uk', '+44-20-7637-1844');
+
+INSERT INTO Books (Title, ISBN, YearPublished, CopiesAvailable) VALUES
+('Harry Potter and the Sorcerer''s Stone', '9780439708180', 1997, 5),
+('1984', '9780451524935', 1949, 3),
+('Pride and Prejudice', '9780141439518', 1813, 4),
+('Adventures of Huckleberry Finn', '9780486280615', 1884, 2),
+('War and Peace', '9780199232765', 1869, 3),
+('Murder on the Orient Express', '9780007119318', 1934, 6),
+('The Old Man and the Sea', '9780684801223', 1952, 2),
+('The Great Gatsby', '9780743273565', 1925, 4),
+('A Tale of Two Cities', '9780141439600', 1859, 3),
+('Norwegian Wood', '9780375704024', 1987, 5),
+('One Hundred Years of Solitude', '9780060883287', 1967, 4),
+('The Time Machine', '9780451530707', 1895, 2),
+('The Lord of the Rings', '9780618640157', 1954, 5),
+('To the Lighthouse', '9780156907392', 1927, 3),
+('Crime and Punishment', '9780140449136', 1866, 4),
+('The Kite Runner', '9781594631931', 2003, 6),
+('The House of the Spirits', '9780553383805', 1982, 3),
+('The Da Vinci Code', '9780307474278', 2003, 5),
+('The Hunger Games', '9780439023481', 2008, 6),
+('A Game of Thrones', '9780553573404', 1996, 5)
+('last of us', '97804180',2023, 0),
+('quiet', '9781524935', 1999, 0),
+('power', '97801414398', 1913, 0);
+
+INSERT INTO Members (FullName, Email, Phone, Address, JoinDate, Status) VALUES
+('Alice Johnson', 'alice.johnson@email.com', '+1-555-0100', '123 Maple St, New York, NY', '2023-01-10', 'Active'),
+('Bob Smith', 'bob.smith@email.com', '+1-555-0101', '456 Oak St, Los Angeles, CA', '2023-02-15', 'Active'),
+('Carol Williams', 'carol.williams@email.com', '+1-555-0102', '789 Pine St, Chicago, IL', '2023-03-20', 'Active'),
+('David Brown', 'david.brown@email.com', '+1-555-0103', '321 Cedar St, Houston, TX', '2023-04-25', 'Active'),
+('Eve Davis', 'eve.davis@email.com', '+1-555-0104', '654 Spruce St, Phoenix, AZ', '2023-05-30', 'Active'),
+('Frank Miller', 'frank.miller@email.com', '+1-555-0105', '987 Birch St, Philadelphia, PA', '2023-06-05', 'Active'),
+('Grace Wilson', 'grace.wilson@email.com', '+1-555-0106', '135 Walnut St, San Antonio, TX', '2023-07-10', 'Active'),
+('Hank Moore', 'hank.moore@email.com', '+1-555-0107', '246 Chestnut St, San Diego, CA', '2023-08-15', 'Active'),
+('Ivy Taylor', 'ivy.taylor@email.com', '+1-555-0108', '357 Aspen St, Dallas, TX', '2023-09-20', 'Active'),
+('Jack Anderson', 'jack.anderson@email.com', '+1-555-0109', '468 Elm St, San Jose, CA', '2023-10-25', 'Active'),
+('Karen Thomas', 'karen.thomas@email.com', '+1-555-0110', '579 Fir St, Austin, TX', '2023-11-30', 'Active'),
+('Leo Martin', 'leo.martin@email.com', '+1-555-0111', '680 Redwood St, Jacksonville, FL', '2023-12-05', 'Active'),
+('Mia Lee', 'mia.lee@email.com', '+1-555-0112', '791 Sequoia St, Fort Worth, TX', '2024-01-10', 'Active'),
+('Nick Harris', 'nick.harris@email.com', '+1-555-0113', '802 Magnolia St, Columbus, OH', '2024-02-15', 'Active'),
+('Olivia Clark', 'olivia.clark@email.com', '+1-555-0114', '913 Cypress St, Charlotte, NC', '2024-03-20', 'Active'),
+('Paul Lewis', 'paul.lewis@email.com', '+1-555-0115', '102 Oakwood St, San Francisco, CA', '2024-04-25', 'Active'),
+('Quinn Walker', 'quinn.walker@email.com', '+1-555-0116', '203 Linden St, Indianapolis, IN', '2024-05-30', 'Active'),
+('Rachel Hall', 'rachel.hall@email.com', '+1-555-0117', '304 Hickory St, Seattle, WA', '2024-06-05', 'Active'),
+('Sam Young', 'sam.young@email.com', '+1-555-0118', '405 Poplar St, Denver, CO', '2024-07-10', 'Active'),
+('Tina King', 'tina.king@email.com', '+1-555-0119', '506 Willow St, Boston, MA', '2024-08-15', 'Active')
+('Ali John', 'ali.johnn@email.com', NULL, NULL, '2023-08-10', 'Active'),
+('Bobe Sally', NULL, NULL, '456 Oak St, Los Angeles, CA', '2023-02-15', 'Active');
+
+INSERT INTO Staff (FullName, Role, Email, Phone) VALUES
+('Alice Peterson', 'Librarian', 'alice.peterson@library.com', '+1-555-1000'),
+('Brian Scott', 'Assistant Librarian', 'brian.scott@library.com', '+1-555-1001'),
+('Catherine Reed', 'Manager', 'catherine.reed@library.com', '+1-555-1002'),
+('Daniel Foster', 'Librarian', 'daniel.foster@library.com', '+1-555-1003'),
+('Emma Griffin', 'Assistant Librarian', 'emma.griffin@library.com', '+1-555-1004'),
+('Franklin Hayes', 'Manager', 'franklin.hayes@library.com', '+1-555-1005'),
+('Grace Sullivan', 'Librarian', 'grace.sullivan@library.com', '+1-555-1006'),
+('Henry Morgan', 'Assistant Librarian', 'henry.morgan@library.com', '+1-555-1007'),
+('Isla Bennett', 'Librarian', 'isla.bennett@library.com', '+1-555-1008'),
+('Jackie Price', 'Manager', 'jackie.price@library.com', '+1-555-1009'),
+('Kevin Brooks', 'Librarian', 'kevin.brooks@library.com', '+1-555-1010'),
+('Laura Jenkins', 'Assistant Librarian', 'laura.jenkins@library.com', '+1-555-1011'),
+('Michael Powell', 'Manager', 'michael.powell@library.com', '+1-555-1012'),
+('Nina Hayes', 'Librarian', 'nina.hayes@library.com', '+1-555-1013'),
+('Oscar Reed', 'Assistant Librarian', 'oscar.reed@library.com', '+1-555-1014'),
+('Paula Simmons', 'Manager', 'paula.simmons@library.com', '+1-555-1015'),
+('Quentin Foster', 'Librarian', 'quentin.foster@library.com', '+1-555-1016'),
+('Rachel Carter', 'Assistant Librarian', 'rachel.carter@library.com', '+1-555-1017'),
+('Samuel Barnes', 'Manager', 'samuel.barnes@library.com', '+1-555-1018'),
+('Tara Collins', 'Librarian', 'tara.collins@library.com', '+1-555-1019');
+
+INSERT INTO BorrowTransactions (BookID, MemberID, StaffID, BorrowDate, DueDate, ReturnDate, Fine) VALUES
+(1, 1, 1, '2024-01-01', '2024-01-15', '2024-01-14', 0),
+(2, 2, 2, '2024-01-02', '2024-01-16', '2024-01-18', 2.50),
+(3, 3, 3, '2024-01-03', '2024-01-17', NULL, 0),
+(4, 4, 4, '2024-01-04', '2024-01-18', '2024-01-18', 0),
+(5, 5, 5, '2024-01-05', '2024-01-19', '2024-01-20', 1.00),
+(6, 6, 6, '2024-01-06', '2024-01-20', NULL, 0),
+(7, 7, 7, '2024-01-07', '2024-01-21', '2024-01-22', 0.50),
+(8, 8, 8, '2024-01-08', '2024-01-22', '2024-01-22', 0),
+(9, 9, 9, '2024-01-09', '2024-01-23', NULL, 0),
+(10, 10, 10, '2024-01-10', '2024-01-24', '2024-01-24', 0),
+(11, 11, 11, '2024-01-11', '2024-01-25', '2024-01-27', 3.00),
+(12, 12, 12, '2024-01-12', '2024-01-26', NULL, 0),
+(13, 13, 13, '2024-01-13', '2024-01-27', '2024-01-28', 1.50),
+(14, 14, 14, '2024-01-14', '2024-01-28', NULL, 0),
+(15, 15, 15, '2024-01-15', '2024-01-29', '2024-01-30', 0.75),
+(16, 16, 16, '2024-01-16', '2024-01-30', NULL, 0),
+(17, 17, 17, '2024-01-17', '2024-01-31', '2024-02-01', 1.25),
+(18, 18, 18, '2024-01-18', '2024-02-01', NULL, 0),
+(19, 19, 19, '2024-01-19', '2024-02-02', '2024-02-03', 0.50),
+(20, 20, 20, '2024-01-20', '2024-02-03', NULL, 0);
+
+INSERT INTO Reservations (BookID, MemberID, ReservationDate, Status) VALUES
+(1, 2, '2024-01-05', 'Pending'),
+(2, 3, '2024-01-06', 'Completed'),
+(3, 4, '2024-01-07', 'Pending'),
+(4, 5, '2024-01-08', 'Cancelled'),
+(5, 6, '2024-01-09', 'Pending'),
+(6, 7, '2024-01-10', 'Completed'),
+(7, 8, '2024-01-11', 'Pending'),
+(8, 9, '2024-01-12', 'Pending'),
+(9, 10, '2024-01-13', 'Completed'),
+(10, 11, '2024-01-14', 'Pending'),
+(11, 12, '2024-01-15', 'Cancelled'),
+(12, 13, '2024-01-16', 'Pending'),
+(13, 14, '2024-01-17', 'Completed'),
+(14, 15, '2024-01-18', 'Pending'),
+(15, 16, '2024-01-19', 'Pending'),
+(16, 17, '2024-01-20', 'Completed'),
+(17, 18, '2024-01-21', 'Pending'),
+(18, 19, '2024-01-22', 'Pending'),
+(19, 20, '2024-01-23', 'Cancelled'),
+(20, 1, '2024-01-24', 'Pending');
