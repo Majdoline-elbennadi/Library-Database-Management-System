@@ -1,6 +1,6 @@
 # 📚 Library Management System
 
-This **Library Management System** is a C++/SQL-based application designed to manage books, members, staff, borrow transactions, and reservations efficiently.  
+This **Library Management System** is a SQL-based application designed to manage books, members, staff, borrow transactions, and reservations efficiently.  
 The system provides features such as fine calculation, overdue tracking, book availability, and persistent data handling for a realistic library management workflow.
 
 It was developed as part of Computer Engineering coursework to strengthen database management, SQL querying, and system design skills.
